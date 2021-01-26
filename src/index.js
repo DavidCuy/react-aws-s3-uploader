@@ -2,14 +2,12 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import AWS from 'aws-sdk';
 import './S3Uploader.css';
-
 class S3Uploader extends Component {
   state = {
     loader: false,
     file: '',
     message: '',
   };
-
   componentDidMount() {
     AWS.config.update({
       region: this.props.bucketRegion,
@@ -18,7 +16,6 @@ class S3Uploader extends Component {
       }),
     });
   }
-
   onChangeFile = () => {
     this.setState({ loader: true, file: '' });
     const s3 = new AWS.S3({
@@ -29,25 +26,27 @@ class S3Uploader extends Component {
     if (!files.length) {
       return this.statusMessage('Please choose a file to upload first.');
     }
-    const file = files[0];
-    const fileName = file.name;
-    s3.upload(
-      {
-        Key: fileName,
-        Body: file,
-        ACL: 'public-read',
-      },
-      (err, data) => {
-        if (err) {
-          this.statusMessage(err);
-        } else {
-          this.setState({ loader: false, file: data.Location });
-          this.props.handleFile(data.Location);
-        }
-      }
-    );
+    let i = 0;
+    for (i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileName = file.name;
+      s3.upload(
+        {
+          Key: fileName,
+          Body: file,
+          ACL: 'public-read',
+        },
+        (err, data) => {
+          if (err) {
+            this.statusMessage(err);
+          } else {
+            this.setState({ loader: false, file: data.Location });
+            this.props.handleFile(data.Location);
+          }
+        },
+      );
+    }
   };
-
   render() {
     const { file, message, loader } = this.state;
     const { buttonName } = this.props;
@@ -57,6 +56,7 @@ class S3Uploader extends Component {
           <div className="S3Uploader-service">
             <button type="button">{buttonName}</button>
             <input
+              multiple
               type="file"
               name="myfile"
               id="photoupload"
@@ -75,12 +75,10 @@ class S3Uploader extends Component {
     );
   }
 }
-
 S3Uploader.defaultProps = {
   buttonName: 'Upload File',
   bucketRegion: 'us-east-1',
 };
-
 S3Uploader.propTypes = {
   buttonName: PropTypes.string,
   bucketRegion: PropTypes.string,
@@ -88,5 +86,4 @@ S3Uploader.propTypes = {
   IdentityPoolId: PropTypes.string.isRequired,
   handleFile: PropTypes.func.isRequired,
 };
-
 export default S3Uploader;
